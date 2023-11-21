@@ -6,6 +6,7 @@ library(ggplot2)
 library(dplyr)
 library(RSQLite)
 library(plotly)
+library(DT)
 
 # Define UI
 ui <- fluidPage(
@@ -13,11 +14,13 @@ ui <- fluidPage(
   
   tabsetPanel(
     tabPanel("Top Albums in USA",
-             plotlyOutput("genre_plot")
+             plotlyOutput("genre_plot"),
+             DTOutput("genre_table")
     ),
     
     tabPanel("Employee Sales Performance",
-             plotlyOutput("employee_sales_plot")
+             plotlyOutput("employee_sales_plot"),
+             DTOutput("employee_sales_table")
     ),
     
     tabPanel("Sales by Country",
@@ -31,11 +34,22 @@ ui <- fluidPage(
                tabPanel("Customer Lifetime Value",
                         plotlyOutput("country_metrics_plot_3")
                )
-             )
+             ),
+             DTOutput("country_metrics_table")
     ),
     
     tabPanel("Albums vs Tracks",
-             plotlyOutput("albums_vs_tracks_plot")
+             plotlyOutput("albums_vs_tracks_plot"),
+             DTOutput("albums_vs_tracks_table")
+    ),
+    
+    tabPanel("View Database Tables",
+             selectInput("selected_table", "Select Table", 
+                         choices = c("employee", "customer", "invoice", 
+                                     "playlist", "invoice_line", 
+                                      "playlist_track", "genre", "artist", 
+                                      "album", "track", "media_type")),
+             DTOutput("selected_table_output")
     )
   )
 )
@@ -188,6 +202,12 @@ server <- function(input, output) {
                           GROUP BY album_purchase;
                           '
   
+  genre_sales <- run_query(albums_to_purchase)
+  employee_sales <- run_query(employee_sales_performance)
+  country_metrics <- run_query(sales_by_country)
+  albums_vs_tracks_data <- run_query(albums_vs_tracks)
+
+  
   # Top Albums in USA
   output$genre_plot <- renderPlotly({
     genre_sales <- run_query(albums_to_purchase)
@@ -197,6 +217,11 @@ server <- function(input, output) {
       theme_bw() + scale_fill_discrete()
   })
   
+  output$genre_table <- renderDT({
+    datatable(genre_sales, options = list(pageLength = 5), rownames = FALSE)
+  })
+  
+  
   # Employee Sales Performance
   output$employee_sales_plot <- renderPlotly({
     employee_sales <- run_query(employee_sales_performance)
@@ -204,6 +229,10 @@ server <- function(input, output) {
           y = total_sales, fill = employee)) +
       theme_bw() + labs( x = "Top Three Employees", y = "Total Albums Sold") + 
       geom_bar(stat = "identity") + scale_fill_viridis_d()
+  })
+  
+  output$employee_sales_table <- renderDT({
+    datatable(employee_sales, options = list(pageLength = 5), rownames = FALSE)
   })
   
   # Sales by Country
@@ -249,6 +278,10 @@ server <- function(input, output) {
       theme_bw()
   })
   
+  output$country_metrics_table <- renderDT({
+    datatable(country_metrics, options = list(pageLength = 5), rownames = FALSE)
+  })
+  
   # Albums vs Tracks
   output$albums_vs_tracks_plot <- renderPlotly({
     albums_vs_tracks_data <- run_query(albums_vs_tracks)
@@ -262,7 +295,23 @@ server <- function(input, output) {
       ) +
       theme_bw() + scale_fill_brewer()
   })
+  
+  output$albums_vs_tracks_table <- renderDT({
+    datatable(albums_vs_tracks_data, options = list(pageLength = 5), rownames = FALSE)
+  })
+  
+  # Selected Database Table
+  output$selected_table_output <- renderDT({
+    selected_table_name <- input$selected_table
+    query <- paste("SELECT * FROM", selected_table_name, ";")
+    table_data <- run_query(query)
+    datatable(table_data, options = list(pageLength = 50), rownames = FALSE)
+  })
+  
+  
 }
+
+  
 
 # Run the Shiny app
 shinyApp(ui, server)
