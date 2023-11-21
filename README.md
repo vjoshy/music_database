@@ -2,7 +2,7 @@
 
 ## Overview
 
-This Shiny app provides an interactive analysis of a music database using various visualizations. The app is designed to explore sales data, employee performance, and customer metrics.
+This Shiny app provides an interactive analysis of a music database using various visualizations. The app is designed to explore sales data, employee performance, and customer metrics. This dashboard can also be found (here)[https://ddfr4c-unmaskedcrusader.shinyapps.io/Music_Db_Analysis/]
 
 ## Features
 
@@ -34,6 +34,3 @@ The app uses the Chinook Database, which is a sample database representing a dig
       library(shiny)
       runApp("path/to/app/directory")
   ```
-  
-  
-   
